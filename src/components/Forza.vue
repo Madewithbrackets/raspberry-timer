@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { useClickHandler } from '../clickHandler.js'
 
@@ -34,7 +34,34 @@ const videoIds = [
   'Pzzm3af_53E',
 ]
 const videoId = videoIds[Math.floor(Math.random() * videoIds.length)]
-const videoUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&mute=0&controls=1&playsinline=1&loop=1&playlist=${videoId}&rel=0&vq=hd720`
+const videoUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&mute=0&controls=1&playsinline=1&loop=1&playlist=${videoId}&rel=0&enablejsapi=1`
+
+const player = ref(null)
+const ytOrigin = 'https://www.youtube-nocookie.com'
+
+const sendYt = (payload) => {
+  player.value?.contentWindow?.postMessage(JSON.stringify(payload), ytOrigin)
+}
+
+const forceQuality = () => {
+  sendYt({ event: 'command', func: 'setPlaybackQuality', args: ['large'] })
+}
+
+const onPlayerLoad = () => {
+  sendYt({ event: 'listening' })
+  forceQuality()
+}
+
+// Quality resets when playback starts, so reapply on state changes
+const onYtMessage = (e) => {
+  if (e.origin !== ytOrigin || e.source !== player.value?.contentWindow) return
+  let msg
+  try { msg = typeof e.data === 'string' ? JSON.parse(e.data) : e.data } catch { return }
+  if (msg?.event === 'onStateChange' || msg?.event === 'initialDelivery') forceQuality()
+}
+
+onMounted(() => window.addEventListener('message', onYtMessage))
+onBeforeUnmount(() => window.removeEventListener('message', onYtMessage))
 
 const decrementTime = () => {
   if (!running.value) return;
@@ -158,6 +185,8 @@ const isRunning = computed(() => running.value);
     <div class="w-full h-full relative overflow-hidden">
 
       <iframe
+        ref="player"
+        @load="onPlayerLoad"
         class="absolute inset-0 h-full w-full border-0"
         :src="videoUrl"
         title="Random Forza Horizon video from thsunami"

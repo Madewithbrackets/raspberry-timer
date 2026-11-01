@@ -4,7 +4,7 @@ import BMO from './components/BMO.vue'
 import Forza from './components/Forza.vue'
 
 const components = [BMO, Forza]
-const currentIndex = ref(0)
+const currentIndex = ref(1)
 
 </script>
 
