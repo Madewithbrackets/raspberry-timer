@@ -1,8 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
 
-import StatusIcon from './StatusIcon.vue'
-import TemperatureIcon from './TemperatureIcon.vue'
 import { useClickHandler } from '../clickHandler.js'
 
 // settings
@@ -16,7 +14,10 @@ const time = ref(workLimit)
 const completed = ref(0)
 
 // fetched
-const temperature = ref(16)
+const url = "https://data.api.xweather.com/conditions/london%2C%20uk?client_id=CniyPiiP5wdPJlScJZgiX&client_secret=xhemzwUPWfzFCk36CHjlBrr0G9g9XP3UhRhVsWIc";
+
+const temperature = ref(0)
+
 const videoIds = [
   'A51PuPOSXhw',
   'oWBcs3hYd7o',
@@ -33,7 +34,7 @@ const videoIds = [
   'Pzzm3af_53E',
 ]
 const videoId = videoIds[Math.floor(Math.random() * videoIds.length)]
-const videoUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&mute=0&controls=1&playsinline=1&loop=1&playlist=${videoId}&rel=0`
+const videoUrl = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=0&mute=0&controls=1&playsinline=1&loop=1&playlist=${videoId}&rel=0&vq=hd720`
 
 const decrementTime = () => {
   if (!running.value) return;
@@ -68,6 +69,7 @@ const nextPosition = () => {
   } else if (position.value === 'work') {
     position.value = 'readyForBreak';
     time.value = breakLimit;
+    updateTemperature();
   } else if (position.value === 'readyForBreak') {
     position.value = 'break';
     time.value = breakLimit;
@@ -76,6 +78,14 @@ const nextPosition = () => {
     time.value = workLimit;
   }
 }
+
+const updateTemperature = async () => {
+  const response = await fetch(url);
+  const data = await response.json();
+  temperature.value = data?.response?.[0]?.periods?.[0]?.tempC + 'c | ' + data?.response?.[0]?.periods?.[0]?.weather ?? 16;
+}
+
+updateTemperature().catch(console.error);
 
 const pauseTimer = () => {
   running.value = false;
@@ -155,20 +165,23 @@ const isRunning = computed(() => running.value);
         allowfullscreen
       ></iframe>
       
-      <div class="status-bar relative z-10 flex gap-12 pl-24 items-center w-full"
+      <div class=" relative z-10 flex gap-12 pl-24 mt-12 items-center w-full"
         @pointerdown="handlePointerDown"
         @pointerup="handlePointerUp"
         @pointercancel="handlePointerCancel"
         @pointerleave="handlePointerCancel"
         @click="handleClick"
       >
-        <div :class="isRunning == true ? '' : 'blinking'" class="radio text-white text-[100px] relative z-10">{{ displayTime }}</div>
+        <div :class="isRunning == true ? '' : 'blinking'" class="radio text-white text-[60px] relative z-10">{{ displayTime }}</div>
 
         <div class="flex gap-2 justify-center items-center">
           <div v-for="n in goal" :key="n">
             <div class="w-4 h-4 rounded-sm border-2 border-white " :class="n > completed ? '' : 'bg-white'"></div>
           </div>
         </div>
+
+        <div class="text-white text-2xl radio">{{ temperature }}</div>
+
       </div>
 
     </div>

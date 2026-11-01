@@ -18,6 +18,17 @@ const completed = ref(0)
 // fetched
 const temperature = ref(16)
 
+// fetched
+const url = "https://data.api.xweather.com/conditions/london%2C%20uk?client_id=CniyPiiP5wdPJlScJZgiX&client_secret=xhemzwUPWfzFCk36CHjlBrr0G9g9XP3UhRhVsWIc";
+
+const updateTemperature = async () => {
+  const response = await fetch(url);
+  const data = await response.json();
+  temperature.value = (data?.response?.[0]?.periods?.[0]?.tempC ?? 16) + "° | " + (data?.response?.[0]?.periods?.[0]?.weather ?? '');
+}
+
+updateTemperature().catch(console.error);
+
 const decrementTime = () => {
   if (!running.value) return;
 
@@ -51,6 +62,7 @@ const nextPosition = () => {
   } else if (position.value === 'work') {
     position.value = 'readyForBreak';
     time.value = breakLimit;
+    updateTemperature().catch(console.error);
   } else if (position.value === 'readyForBreak') {
     position.value = 'break';
     time.value = breakLimit;
@@ -144,7 +156,7 @@ const isRunning = computed(() => running.value);
         
         <div class="flex items-center justify-end">
           <div class="weather-icon"><TemperatureIcon :temperature="temperature"/></div>
-          <div class="text-5xl">{{ temperature }}°</div>
+          <div class="text-2xl">{{ temperature }}</div>
         </div>
       </div>
 
