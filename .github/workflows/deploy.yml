@@ -1,3 +1,4 @@
+
 name: Deploy Vue App
 
 on:
@@ -25,6 +26,14 @@ jobs:
       - run: npm ci
 
       - run: npm run build
+
+      - name: Verify build
+        run: |
+          echo "=== DIST CONTENTS ==="
+          find dist -maxdepth 3 -type f
+          echo "=== GENERATED HTML ==="
+          cat dist/index.html
+          test -d dist/assets
 
       - uses: actions/configure-pages@v5
 
